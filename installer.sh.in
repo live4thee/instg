@@ -1,0 +1,33 @@
+#!/bin/bash
+
+set -e
+
+PATH=/usr/bin:/bin
+umask 022
+
+# Number of lines of this script file.
+SCRIPT_LINES=@nrline@
+
+# MD5 check sum of the file to be unzipped.
+MD5_CHECK_SUM=@md5sum@
+
+
+TMP=`mktemp -t installer.XXXXXX`
+trap "rm $TMP* 2>/dev/null" HUP INT QUIT TERM EXIT
+
+echo 'Unpacking binary files...'
+tail -n +$((SCRIPT_LINES+1)) "$0" > $TMP
+
+THIS_SUM=`md5sum $TMP | cut -d' ' -f1`
+
+if test $THIS_SUM != $MD5_CHECK_SUM; then
+    echo "The installer appears to be corrupted :("
+    echo "Please download and retry."
+    exit 1
+fi
+
+# How to unzip the file
+UNZIPPER="@unzipper@"
+
+$UNZIPPER $TMP
+exit 0
